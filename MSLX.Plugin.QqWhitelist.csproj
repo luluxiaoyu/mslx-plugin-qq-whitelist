@@ -18,7 +18,7 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="10.0.7" />
-    <PackageReference Include="MSLX.SDK" Version="1.7.5" ExcludeAssets="runtime" />
+    <PackageReference Include="MSLX.SDK" Version="1.7.6" ExcludeAssets="runtime" />
     <PackageReference Include="MailKit" Version="4.18.1" />
     <PackageReference Include="MimeKit" Version="4.18.1" />
   </ItemGroup>

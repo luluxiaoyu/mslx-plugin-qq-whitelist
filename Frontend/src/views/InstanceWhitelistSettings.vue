@@ -33,6 +33,10 @@ const currentServerId = computed(() => {
   return props.serverId || props.instanceId || 0;
 });
 
+// 获取宿主 v1.7.6+ 节点上下文，子节点自动绑定，未适配/旧宿主平滑回退
+const nodeContext = (window as any).MSLX_NodeContext?.use?.();
+const httpClient = nodeContext?.request;
+
 const loading = ref(false);
 const saving = ref(false);
 const smtpDialogRef = ref<InstanceType<typeof SmtpSettingsDialog> | null>(null);
@@ -56,13 +60,27 @@ const records = ref<WhitelistRecord[]>([]);
 const recordsLoading = ref(false);
 const searchKeyword = ref('');
 
-const origin = computed(() => {
+const isSlaveNode = computed(() => {
+  return Boolean(nodeContext && nodeContext.nodeId && nodeContext.nodeId !== 'local');
+});
+
+const publicBaseUrl = computed(() => {
+  try {
+    if (isSlaveNode.value) {
+      const target = nodeContext.getTarget?.();
+      if (target?.baseUrl) {
+        return target.baseUrl.replace(/\/+$/, '');
+      }
+    }
+  } catch (err) {
+    console.warn('[QqWhitelist] 获取子节点目标地址失败，回退至当前面板', err);
+  }
   return typeof window !== 'undefined' ? window.location.origin : '';
 });
 
 const fullPublicUrl = computed(() => {
   const s = formData.value.slug.trim() || `server-${currentServerId.value}`;
-  return `${origin.value}/public/whitelist/${s}`;
+  return `${publicBaseUrl.value}/public/whitelist/${s}`;
 });
 
 const filteredRecords = computed(() => {
@@ -80,7 +98,7 @@ const loadConfig = async () => {
   if (!currentServerId.value) return;
   loading.value = true;
   try {
-    const res = await getInstanceWhitelistConfig(currentServerId.value);
+    const res = await getInstanceWhitelistConfig(currentServerId.value, httpClient);
     if (res) {
       formData.value = {
         serverId: currentServerId.value,
@@ -109,7 +127,7 @@ const loadRecords = async () => {
   if (!currentServerId.value) return;
   recordsLoading.value = true;
   try {
-    const list = await getWhitelistRecords(currentServerId.value);
+    const list = await getWhitelistRecords(currentServerId.value, httpClient);
     records.value = Array.isArray(list) ? list : [];
   } catch (err: any) {
     console.error('Failed to load records', err);
@@ -149,7 +167,7 @@ const handleSmtpSaved = () => {
 
 const handleRevokeRecord = async (record: WhitelistRecord) => {
   try {
-    await deleteWhitelistRecord(currentServerId.value, record.id);
+    await deleteWhitelistRecord(currentServerId.value, record.id, httpClient);
     MessagePlugin.success(`已撤销玩家 ${record.playerName} 的白名单`);
     await loadRecords();
   } catch (err: any) {
@@ -168,14 +186,18 @@ const handleSave = async () => {
 
   saving.value = true;
   try {
-    await saveInstanceWhitelistConfig(currentServerId.value, {
-      ...formData.value,
-      slug: rawSlug,
-      title: formData.value.title.trim(),
-      notice: formData.value.notice.trim(),
-      commandTemplate: formData.value.commandTemplate.trim(),
-      allowedNameRegex: formData.value.allowedNameRegex.trim(),
-    });
+    await saveInstanceWhitelistConfig(
+      currentServerId.value,
+      {
+        ...formData.value,
+        slug: rawSlug,
+        title: formData.value.title.trim(),
+        notice: formData.value.notice.trim(),
+        commandTemplate: formData.value.commandTemplate.trim(),
+        allowedNameRegex: formData.value.allowedNameRegex.trim(),
+      },
+      httpClient
+    );
     MessagePlugin.success('白名单设置已成功保存');
     emits('success');
     emits('saved');
@@ -270,6 +292,14 @@ const tableColumns = [
             </div>
             <div class="font-mono text-[var(--td-text-color-primary)] break-all select-all">
               {{ fullPublicUrl }}
+            </div>
+            <!-- 若为子节点实例，提示服主公网开放与开关要求 -->
+            <div
+              v-if="isSlaveNode"
+              class="text-[11px] text-blue-600 dark:text-blue-400 flex items-start gap-1.5 leading-relaxed bg-blue-500/10 p-2 rounded border border-blue-500/20"
+            >
+              <info-circle-icon size="14px" class="shrink-0 mt-0.5" />
+              <span>当前为分布式子节点实例，申请链接已自动定向至该子节点独立地址。请确保外部玩家可访问子节点端口，并在子节点开启「公开页面」开关。</span>
             </div>
             <div class="flex items-center gap-2 pt-1 border-t border-[var(--td-component-border)]">
               <t-button size="small" variant="text" theme="primary" @click="copyPublicUrl">

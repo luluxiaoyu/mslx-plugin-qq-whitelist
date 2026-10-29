@@ -39,12 +39,16 @@ const emits = defineEmits<{
   (e: 'saved'): void;
 }>();
 
+// 获取宿主 v1.7.6+ 节点上下文，子节点自动绑定，未适配/旧宿主平滑回退
+const nodeContext = (window as any).MSLX_NodeContext?.use?.();
+const httpClient = nodeContext?.request;
+
 const open = async () => {
   visible.value = true;
   testFeedback.value = null;
   loading.value = true;
   try {
-    const res = await getSmtpConfig();
+    const res = await getSmtpConfig(httpClient);
     if (res) {
       formData.value = {
         host: res.host || 'smtp.qq.com',
@@ -97,15 +101,19 @@ const handleTestEmail = async () => {
   testing.value = true;
   testFeedback.value = null;
   try {
-    const msg = await testSmtpEmail(target, {
-      host: formData.value.host,
-      port: formData.value.port,
-      enableSsl: formData.value.enableSsl,
-      fromEmail: formData.value.fromEmail,
-      fromName: formData.value.fromName,
-      username: formData.value.username,
-      password: formData.value.password,
-    });
+    const msg = await testSmtpEmail(
+      target,
+      {
+        host: formData.value.host,
+        port: formData.value.port,
+        enableSsl: formData.value.enableSsl,
+        fromEmail: formData.value.fromEmail,
+        fromName: formData.value.fromName,
+        username: formData.value.username,
+        password: formData.value.password,
+      },
+      httpClient
+    );
     testFeedback.value = { success: true, message: msg };
     MessagePlugin.success('测试邮件发送成功，请查收收件箱');
   } catch (err: any) {
@@ -132,7 +140,7 @@ const handleSave = async () => {
 
   saving.value = true;
   try {
-    await saveSmtpConfig(formData.value);
+    await saveSmtpConfig(formData.value, httpClient);
     MessagePlugin.success('发信策略已成功保存');
     visible.value = false;
     emits('saved');
