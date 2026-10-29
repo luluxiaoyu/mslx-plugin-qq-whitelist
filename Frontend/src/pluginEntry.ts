@@ -7,47 +7,59 @@ export const pluginConfig = {
   name: 'MSLX.Plugin.QqWhitelist',
   version: '1.0.0',
 
-  // 免登录独立全屏公开页面路由 (v1.7.3+)
+  // 免登录独立全屏公开页面路由 (使用官方专属公共布局 PLUGINS_PUBLIC_LAYOUT)
   routes: [
     {
       path: '/public/whitelist',
-      name: 'PublicWhitelistRoot',
-      component: PublicWhitelistPage,
-      meta: {
-        title: '自助申请白名单',
-        anonymous: true,
-        hidden: true,
-      },
-    },
-    {
-      path: '/public/whitelist/:slug',
-      name: 'PublicWhitelistSlug',
-      component: PublicWhitelistPage,
-      meta: {
-        title: '自助申请白名单',
-        anonymous: true,
-        hidden: true,
-      },
+      component: 'PLUGINS_PUBLIC_LAYOUT',
+      children: [
+        {
+          path: '',
+          name: 'PublicWhitelistRoot',
+          component: PublicWhitelistPage,
+          meta: {
+            title: '自助申请白名单',
+            anonymous: true,
+            hidden: true,
+          },
+        },
+        {
+          path: ':slug',
+          name: 'PublicWhitelistSlug',
+          component: PublicWhitelistPage,
+          meta: {
+            title: '自助申请白名单',
+            anonymous: true,
+            hidden: true,
+          },
+        },
+      ],
     },
     {
       path: '/mslx-plugin-qq-whitelist/public',
-      name: 'MslxPluginQqWhitelistPublic',
-      component: PublicWhitelistPage,
-      meta: {
-        title: '自助申请白名单',
-        anonymous: true,
-        hidden: true,
-      },
-    },
-    {
-      path: '/mslx-plugin-qq-whitelist/public/:slug',
-      name: 'MslxPluginQqWhitelistPublicSlug',
-      component: PublicWhitelistPage,
-      meta: {
-        title: '自助申请白名单',
-        anonymous: true,
-        hidden: true,
-      },
+      component: 'PLUGINS_PUBLIC_LAYOUT',
+      children: [
+        {
+          path: '',
+          name: 'MslxPluginQqWhitelistPublic',
+          component: PublicWhitelistPage,
+          meta: {
+            title: '自助申请白名单',
+            anonymous: true,
+            hidden: true,
+          },
+        },
+        {
+          path: ':slug',
+          name: 'MslxPluginQqWhitelistPublicSlug',
+          component: PublicWhitelistPage,
+          meta: {
+            title: '自助申请白名单',
+            anonymous: true,
+            hidden: true,
+          },
+        },
+      ],
     },
   ],
 

@@ -16,7 +16,7 @@ public class MSLXPluginEntry : IPlugin
     public string Id => "mslx-plugin-qq-whitelist";
     public string Name => "自助QQ申请白名单";
     public string Description => "基于 QQ 邮箱所有权验证的 Minecraft 实例自助网页白名单申请插件，支持多实例独立配置与全局发信策略";
-    public string Version => "1.0.1";
+    public string Version => "1.0.1.2";
     public string Icon => "icon.png";
     public bool HasPublicPages => true;
     public string MinSDKVersion => "1.7.5";

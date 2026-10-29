@@ -8,8 +8,6 @@ import {
   MailIcon,
   UserIcon,
   LockOnIcon,
-  SunnyIcon,
-  MoonIcon,
   ServerIcon,
   InfoCircleIcon,
   SecuredIcon,
@@ -26,79 +24,6 @@ const route = useRoute();
 const loading = ref(true);
 const serverInfo = ref<PublicServerInfo | null>(null);
 const errorMessage = ref('');
-
-// 暗色模式状态
-const isDarkMode = ref(false);
-
-// 宿主 Pinia Webpanel Store 引用与登录背景获取
-const getWebpanelStore = () => {
-  try {
-    const stores = (window as any).MSLX_Stores;
-    if (stores?.useWebpanelStore) {
-      return stores.useWebpanelStore();
-    }
-  } catch (err) {
-    console.warn('[QqWhitelist] 获取宿主 webpanelStore 失败', err);
-  }
-  return null;
-};
-
-const getImageUrl = (fileName: string) => {
-  if (!fileName) return '';
-  if (fileName.startsWith('http://') || fileName.startsWith('https://') || fileName.startsWith('data:')) {
-    return fileName;
-  }
-  const userStore = (window as any).MSLX_Stores?.useUserStore?.();
-  const baseUrl = userStore?.baseUrl || window.location.origin;
-  return `${baseUrl}/api/static/images/${fileName}`;
-};
-
-const currentBackgroundUrl = computed(() => {
-  const store = getWebpanelStore();
-  const settings = store?.settings;
-  const fileName = isDarkMode.value
-    ? settings?.webPanelStyleDarkBackground
-    : settings?.webPanelStyleLightBackground;
-  return getImageUrl(fileName || '');
-});
-
-const pageStyle = computed(() => {
-  const store = getWebpanelStore();
-  const settings = store?.settings;
-  const fileName = isDarkMode.value
-    ? settings?.webPanelStyleDarkBackground
-    : settings?.webPanelStyleLightBackground;
-  const url = getImageUrl(fileName || '');
-
-  const lightOp = settings?.webPanelStyleLightComponentsOpacity ?? 0.88;
-  const darkOp = settings?.webPanelStyleDarkComponentsOpacity ?? 0.85;
-
-  const styleObj: Record<string, string> = {
-    '--comp-op-light': String(lightOp),
-    '--comp-op-dark': String(darkOp),
-  };
-
-  if (url) {
-    styleObj.backgroundImage = `url('${url}')`;
-    styleObj.backgroundSize = 'cover';
-    styleObj.backgroundPosition = 'center';
-    styleObj.backgroundRepeat = 'no-repeat';
-    styleObj.backgroundAttachment = 'fixed';
-  }
-
-  return styleObj;
-});
-
-const toggleTheme = () => {
-  isDarkMode.value = !isDarkMode.value;
-  if (isDarkMode.value) {
-    document.documentElement.setAttribute('theme-mode', 'dark');
-    document.documentElement.classList.add('dark');
-  } else {
-    document.documentElement.setAttribute('theme-mode', 'light');
-    document.documentElement.classList.remove('dark');
-  }
-};
 
 // 表单输入
 const inputQq = ref('');
@@ -167,19 +92,6 @@ const fetchInfo = async () => {
 };
 
 onMounted(() => {
-  // 检测系统暗色偏好
-  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    isDarkMode.value = true;
-    document.documentElement.setAttribute('theme-mode', 'dark');
-    document.documentElement.classList.add('dark');
-  }
-
-  // 尝试拉取宿主 Pinia 最新外观样式配置
-  const store = getWebpanelStore();
-  if (store && typeof store.fetchSettings === 'function') {
-    store.fetchSettings().catch(() => {});
-  }
-
   fetchInfo();
 });
 
@@ -279,30 +191,7 @@ const handleReset = () => {
 </script>
 
 <template>
-  <div
-    :class="[
-      'public-whitelist-wrapper min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-6 transition-colors duration-200 relative',
-      !currentBackgroundUrl && (isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-slate-50 text-slate-800')
-    ]"
-    :style="pageStyle"
-  >
-    <!-- 背景图片遮罩层 (与 MSLX 登录页风格保持一致，确保高光与暗色背景下的表单可读性) -->
-    <div
-      v-if="currentBackgroundUrl"
-      class="absolute inset-0 bg-slate-900/20 dark:bg-black/45 backdrop-blur-[2px] pointer-events-none transition-all duration-300"
-    ></div>
-
-    <!-- 顶部状态栏与主题切换 -->
-    <div class="fixed top-4 right-4 z-50 flex items-center gap-2">
-      <button
-        @click="toggleTheme"
-        class="w-10 h-10 rounded-full flex items-center justify-center border border-[var(--td-component-border)] bg-[var(--td-bg-color-container)] shadow-sm hover:scale-105 transition-transform text-[var(--td-text-color-primary)] cursor-pointer backdrop-blur"
-        :title="isDarkMode ? '切换至亮色模式' : '切换至暗色模式'"
-      >
-        <sunny-icon v-if="isDarkMode" />
-        <moon-icon v-else />
-      </button>
-    </div>
+  <div class="public-whitelist-wrapper flex-1 w-full flex flex-col items-center justify-center p-4 sm:p-6">
 
     <!-- 加载中 -->
     <div v-if="loading" class="relative z-10 flex flex-col items-center justify-center gap-3">
@@ -556,24 +445,5 @@ const handleReset = () => {
 <style scoped>
 .public-whitelist-wrapper {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-}
-
-/* 核心 design-card 视觉规范：在独立公共路由中注入 MSLX 规范的高质感磨砂半透明卡片样式 */
-:deep(.design-card),
-.design-card {
-  background-color: rgba(255, 255, 255, var(--comp-op-light, 0.88)) !important;
-  border: 1px solid rgba(255, 255, 255, 0.7) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.12) !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-:global(html[theme-mode='dark']) .design-card,
-:global(.dark) .design-card,
-.dark .design-card {
-  background-color: rgba(24, 24, 27, var(--comp-op-dark, 0.85)) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.35) !important;
 }
 </style>
