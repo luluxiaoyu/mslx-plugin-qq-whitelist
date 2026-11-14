@@ -4062,6 +4062,9 @@ const Xt = /* @__PURE__ */ t.defineComponent({
     {
       path: "/public/whitelist",
       component: "PLUGINS_PUBLIC_LAYOUT",
+      meta: {
+        hidden: !0
+      },
       children: [
         {
           path: "",
@@ -4088,6 +4091,9 @@ const Xt = /* @__PURE__ */ t.defineComponent({
     {
       path: "/mslx-plugin-qq-whitelist/public",
       component: "PLUGINS_PUBLIC_LAYOUT",
+      meta: {
+        hidden: !0
+      },
       children: [
         {
           path: "",

@@ -12,6 +12,9 @@ export const pluginConfig = {
     {
       path: '/public/whitelist',
       component: 'PLUGINS_PUBLIC_LAYOUT',
+      meta: {
+        hidden: true,
+      },
       children: [
         {
           path: '',
@@ -38,6 +41,9 @@ export const pluginConfig = {
     {
       path: '/mslx-plugin-qq-whitelist/public',
       component: 'PLUGINS_PUBLIC_LAYOUT',
+      meta: {
+        hidden: true,
+      },
       children: [
         {
           path: '',
